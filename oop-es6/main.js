@@ -6,7 +6,7 @@
   
 
   addGrade(grade, subject) {
-    if (typeof (this.list[subject]) != "object") {
+    if (this.list[subject] == undefined) {
       this.list[subject] = [];
     }
 
@@ -14,12 +14,8 @@
       return this.list[subject].push(grade);
     } else {
       console.log (`Вы попытались поставить оценку ${grade} по предмету ${subject}. Допустимый предел: 0-5`);
-      let disciplineLenght = 0;
-      for (let i in this.list[subject]) {
-        disciplineLenght++;
-      };
-      return disciplineLenght;
-    }
+    };
+      return this.list[subject].length; // Метод возвращает количество поставленных оценок по данному предмету
   };
 
   getAverageBySubject( subject ) {
@@ -88,15 +84,17 @@ console.log(log.getGradesBySubject('geom'));
 
 console.log(log.getGrades());
 
-console.log("");
-console.log("");
-console.log ("разделитель задач")
-console.log("");
-console.log("");
+
+console.log ("\n\n разделитель задач \n\n")
+
 
 //Задача 2
 class Weapon {
 	constructor(){
+		this.name = 'Рука',
+		this.attack= 1,
+		this.durability= Infinity,
+		this.range= 1
 	}
 
 	takeDamage( damage ) {
@@ -174,7 +172,7 @@ class Staff extends Weapon{
 		this.name = 'Посох',
 		this.attack = 8,
 		this.durability = 300,
-		this.range = 1,
+		this.range = 2,
 		this.maxDurability = this.durability;
 	}
 };
@@ -267,7 +265,15 @@ class Player {
 
 	move (distance) {
 		if (distance < 0) {
-			this.moveLeft(distance*(-1))
+			this.moveLeft(distance*(-1)) 
+			/*
+			из задания дано, что distance может быть меньше 0. "Если distance меньше нуля, вызывается moveLeft( distance ), иначе и moveRight( distance )."
+			
+			Ввиду отрицательного значения параметра distance выполнение строки "this.position = this.position - distance" из метода moveLeft	
+			приведёт к фактическому изменению позиции вправо.
+
+			Можно было или взять модуль или умножить отрицательное значение на -1
+			*/
 		} else {
 			this.moveRight(distance)
 		}
@@ -277,28 +283,31 @@ class Player {
 		return (this.getLuck() > (100 - this.luck)/100)
 	}
 
-	dodgeg(){
-		return (this.getLuck > (100 - this.agility - this.speed*3)/100)
+	dodged(){
+		return (this.getLuck() > (100 - this.agility - this.speed*3)/100)
 	}
 
 	takeAttack (damage) {
 		if (this.isAttackBlocked()) {
-			this.weapon.takeDamage(damage)
+			this.weapon.takeDamage(damage);
+			return ('--->атака блокирована');
 		} else {
-			if (this.dodgeg()) {
-				damage = 0;
+			if (!(this.dodged())) {
+				this.takeDamage(damage);
+				return (`--->нанесённый урон: ${damage}`);
 			} else {
-				this.takeDamage(damage)
+				return (`--->противник уклонился`);
 			}
 		}
+
 	}
 
 	checkWeapon () {
 		if (this.weapon.isBroken()) {
-			if (this.weapon.name == 'нож') {
-				this.weapon = new Arm;
+			if (this.weapon.name == 'Нож') {
+				this.weapon = new Arm();
 			} else {
-				this.weapon = new Knife;
+				this.weapon = new Knife();
 			}
 		}
 	}
@@ -306,45 +315,38 @@ class Player {
 	tryAttack (enemy) {
 
 		let distanceDifference = Math.abs(this.position - enemy.position);
+		let damageForMessage;
 		if (distanceDifference <= this.weapon.range) {
 			this.weapon.takeDamage(10*this.getLuck());
 			if (distanceDifference == 0) {
 				enemy.moveRight(1);
-				enemy.takeAttack(this.getDamage(1)*2);	
+				damageForMessage = enemy.takeAttack(this.getDamage(1)*2);	
 			} else {
-				enemy.takeAttack(this.getDamage(distanceDifference));
+				damageForMessage = enemy.takeAttack(this.getDamage(distanceDifference));
 			}
+			console.log(damageForMessage);
 		}
+
 	}
 
 	chooseEnemy (players) {
-		let liveEnemyPlayers = [];
-		let quantityLiveEnemyPlayers = 0;
-		let playerId;
-		console.log('Обзор оставшихся врагов:');
-		for (let enemy in players) {
-			if ((players[enemy].life !=0) && (players[enemy].name != this.name) ) {
-				liveEnemyPlayers.push(players[enemy]);
-				quantityLiveEnemyPlayers++;
-				console.log(players[enemy])
-			};
-		};
+		let playerId = 0;
+		let minimumLife = players[0].life;
 
-
-		if (quantityLiveEnemyPlayers > 0) {
-			let minimumLife = liveEnemyPlayers[0].life;
-			playerId = 0;
-
-			for (let i = 1; i < quantityLiveEnemyPlayers; i++) {
-				if (liveEnemyPlayers[i].life < minimumLife) {
-					playerId = i;
-					minimumLife = liveEnemyPlayers[i].life;
-				};
-			};
-			console.log(`Игрок ${this.name} выбрал целью игрока ${liveEnemyPlayers[playerId].name} `);
+		if (players[0].name == this.name) {
+			minimumLife = players[1].life;
+			playerId = 1;
 		}
 
-		return liveEnemyPlayers[playerId]
+		for (let i = 1; i < players.length; i++) {
+			if (players[i].life < minimumLife && players[i].name != this.name && players[i].life !=0) {
+				playerId = i;
+				minimumLife = players[i].life;
+			};
+		};
+		console.log(`Игрок ${this.name} выбрал целью игрока ${players[playerId].name} `);
+		console.log(`Цель: ${players[playerId].name}, зд: ${players[playerId].life}, поз: ${players[playerId].position}`)
+		return players[playerId];
 	}
 
 	moveToEnemy(enemy) {
@@ -358,6 +360,7 @@ class Player {
 		if (choosedEnemy.life === 0) {
 			console.log(`Игрок ${this.name} убил игрока ${choosedEnemy.name} `);
 		}
+	return players.indexOf(choosedEnemy);
 	}
 };
 
@@ -366,9 +369,9 @@ class Warrior extends Player{
 		super({name, position});
 		this.life = 120,
 		this.speed = 2,
-		this.attack = 10;
-		this.description = 'Воин';
-		this.weapon = new Sword
+		this.attack = 10,
+		this.description = 'Воин',
+		this.weapon = new Sword(),
 		this.maxLife = this.life;
 
 	}
@@ -376,8 +379,8 @@ class Warrior extends Player{
 	takeDamage (damage) {
 		if ( this.life < this.maxLife*0.5 && this.getLuck() > 0.8) {
 			if (damage > this.magic) {
-				this.magic = 0;
 				damage = damage - this.magic;
+				this.magic = 0;
 			} else {
 				this.magic = this.magic - damage;
 				damage = 0;
@@ -399,10 +402,10 @@ class Archer extends Player{
 		super({name, position});
 		this.life = 80,
 		this.magic = 35,
-		this.attack = 5;
-		this.agility = 10;
-		this.description = 'Лучник';
-		this.weapon = new Bow
+		this.attack = 5,
+		this.agility = 10,
+		this.description = 'Лучник',
+		this.weapon = new Bow();
 	}
 
 	getDamage(distance) {
@@ -415,11 +418,11 @@ class Mage extends Player{
 		super({name, position});
 		this.life = 70,
 		this.magic = 100,
-		this.attack = 5;
+		this.attack = 5,
 		this.agility = 8;
-		this.description = 'Маг';
-		this.weapon = new Staff;
-		this.maxMagic = this.magic
+		this.description = 'Маг',
+		this.weapon = new Staff(),
+		this.maxMagic = this.magic;
 	}
 
 	takeDamage (damage) {
@@ -440,11 +443,11 @@ class Dwarf extends Warrior{
 	constructor({name, position}){
 		super({name, position});
 		this.life = 130,
-		this.attack = 15;
-		this.luck = 20;
-		this.description = 'Гном';
-		this.weapon = new Axe
-		this.maxLife = this.life;
+		this.attack = 15,
+		this.luck = 20,
+		this.description = 'Гном',
+		this.weapon = new Axe(),
+		this.maxLife = this.life,
 		this.hitCounter = 0;
 
 	}
@@ -471,24 +474,24 @@ class Crossbowman extends Archer{
 	constructor({name, position}){
 		super({name, position});
 		this.life = 85,
-		this.attack = 8;
-		this.agility = 20;
-		this.luck = 15;
-		this.description = 'Арбалетчик';
-		this.weapon = new LongBow
+		this.attack = 8,
+		this.agility = 20,
+		this.luck = 15,
+		this.description = 'Арбалетчик',
+		this.weapon = new LongBow();
 	}
 };
 
-class Demiurg extends Mage{
+class Demiurge extends Mage{
 	constructor({name, position}){
 		super({name, position});
 		this.life = 80,
 		this.magic = 120,
-		this.attack = 6;
-		this.luck = 12;
-		this.description = 'Демиург';
-		this.weapon = new StormStaff;
-		this.maxMagic = this.magic
+		this.attack = 6,
+		this.luck = 12,
+		this.description = 'Демиург',
+		this.weapon = new StormStaff(),
+		this.maxMagic = this.magic;
 	}
 	getDamage(distance){
 		if (distance <= this.weapon.range) {
@@ -509,49 +512,41 @@ class Demiurg extends Mage{
 
 function play (players) {
 
-	let playersQuantity = 0;
-    for (let i in players) {
-       playersQuantity++;
-    }		
-
-    let winnerId = 0;
-	let notTheLastPlayer = 0;
 	let turnCount = 1;
 
-	while (notTheLastPlayer != 1 && turnCount < 200) {
-		console.log(`Ход ${turnCount}`);
-		turnCount++;
+	while (players.length != 1) {
+		console.log(`\nХод ${turnCount}, активные игроки: ${players.length}`);
 
-		for (let i = 0; i < playersQuantity; i++) {
 
-			notTheLastPlayer = 0;
-
+		for (let i = 0; i < players.length; i++) {
 			if (players[i].life != 0) {
 				console.log(`Ходит ${players[i].name}`)
+				console.log(`${players[i].name}, зд: ${players[i].life}, поз: ${players[i].position}`)
+				
 				players[i].turn(players);
-			};
+			}
 		};
 
-		for (let i = 0; i < playersQuantity; i++) {
-			if (players[i].life != 0) {
-				notTheLastPlayer++;
-				console.log(`Игрок ${players[i].name}, зд: ${players[i].life}, поз: ${players[i].position}`);
-				winnerId = i;
+		for (let playerId in players) {
+				if (players[playerId].isDead()) {
+				players.splice(playerId, 1);
 			}
+		}
+
+		if (players.length > 1) {
+			turnCount++;
 		}
 	}
 
-	console.log(`Игрок ${players[winnerId].name} победил! Ура! Всего ходов: ${turnCount} `);
+	console.log(`Игрок ${players[0].name} победил! Ура! Всего ходов: ${turnCount} `);
 
 }
-
 play ([
 	new Warrior({ name: 'Первый', position: 20}),
 	new Dwarf({ name: 'Второй', position: 15}),	
 	new Archer({ name: 'Третий', position: 1}),
-	new Demiurg({ name: 'Четвертый', position: 30}),
+	new Demiurge({ name: 'Четвертый', position: 30}),
 	new Crossbowman({ name: 'Пятый', position: -6}),
 	new Warrior({ name: 'Шестой', position: 50}),	
-	new Archer({ name: 'Седьмой', position: 10}),
-	new Mage({ name: 'Восьмой', position: 40})
+	new Archer({ name: 'Седьмой', position: 10})
 ])
