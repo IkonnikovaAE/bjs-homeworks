@@ -106,42 +106,29 @@ function main(){
 			    	console.error('Error during login user Ivan');
 			    } else {
 			    	console.log(`User Ivan has been logined`);
-			    	Ivan.logged = true
+			    	Ivan.addMoney({ currency:'EUR', amount: 500000 }, (err, data) => {
+					    if (err) {
+					    	console.error(`Error during adding money to ${Ivan.username}`);
+					    }else{
+						    console.log(`Money has been added to ${Ivan.username}`);
+				    		Ivan.convertMoney({fromCurrency:'EUR',targetCurrency:'NETCOIN',targetAmount:36000}, (err,data) => {
+								if (err) {
+									console.error(`Error during convert money for ${Ivan.username}`)
+								}else{
+									console.log(`Money has been converted for ${Ivan.username}`);
+									Ivan.transferMoney({to: Petya.username,amount:36000},(err,data) => {
+										(err) ? console.error(`Error during transfer money to ${Petya.username}`) : console.log(`User ${Petya.username} transfered money`);
+									});
+								}
+							});
+						}
+					});
 			    }
 			});
 		}
 	});
 
-	setTimeout (function() {moneyAdd (Ivan)}, 5000);
-	setTimeout (function() {moneyTransf (Ivan, Petya)}, 6000);
 }
 
- function moneyAdd (user1) {
-
-	if (user1.logged) {
-		user1.addMoney({ currency:'EUR', amount: 500000 }, (err, data) => {
-		    if (err) {
-		    	console.error(`Error during adding money to ${user1.username}`);
-		    }else{
-			    console.log(`Money has been added to ${user1.username}`);
-			}
-		});
-	} else {
-   		console.log(`${user1.username} not authorized`);
-	} 
-}
-
-function moneyTransf (user1, user2) {
-	user1.convertMoney({fromCurrency:'EUR',targetCurrency:'NETCOIN',targetAmount:36000}, (err,data) => {
-		if (err) {
-			console.error(`Error during convert money for ${user1.username}`)
-		}else{
-			console.log(`Money has been converted for ${user1.username}`);
-			user1.transferMoney({to: user2.username,amount:36000},(err,data) => {
-				(err) ? console.error(`Error during transfer money to ${user2.username}`) : console.log(`User ${user2.username} transfered money`);
-			});
-		}
-	});
-}
 
 main();
