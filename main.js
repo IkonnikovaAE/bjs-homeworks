@@ -8,7 +8,6 @@ class Profile {
 	    this.firstName = firstName;
 	    this.lastName = lastName;
 	    this.password = password;
-	    this.logged = false;
     }
      
     createUser(callback) {
@@ -38,7 +37,6 @@ class Profile {
      
     convertMoney({ fromCurrency, targetCurrency, targetAmount }, callback) {
 	    return ApiConnector.convertMoney({fromCurrency,targetCurrency,targetAmount}, (err,data) => {
-		    console.log(data,err);
 		    console.log(`Convert from ${fromCurrency} to ${targetCurrency}. Amount = ${targetAmount}`);
 		    callback(err,data);
 	    });
@@ -73,20 +71,23 @@ function main(){
 	    password: 'petyaspass'
     });
      
+    function PetyaPerformLogin() {
+    	Petya.performLogin((err,data)=> {
+    		if (err) {
+		    	console.error('Error during login user Petya');
+		    	return;
+		    };
+	    	console.log(`User Petya has been logined`);
+		});
+    }
+
     Petya.createUser((err,data) =>{
     	if (err){
-	    	console.error('Error during creating user Petya')
-	    }else{
-	    	console.log(`User Petya has been created`);
-	    	Petya.performLogin((err,data)=> {
-	    		if (err) {
-			    	console.error('Error during login user Petya')
-			    }else{
-			    	console.log(`User Petya has been logined`);
-			    	Petya.logged = true
-    		    }
-    		});
-    	}
+	    	console.error('Error during creating user Petya');
+	    	return;
+	    };
+	    console.log(`User Petya has been created`);
+		PetyaPerformLogin();
     });
 
     const Ivan = new Profile({
@@ -95,37 +96,57 @@ function main(){
         password: 'ivanspass'
 	});
      
-    
+   function IvanConvertMoney () {
+    	Ivan.convertMoney({fromCurrency:'EUR',targetCurrency:'NETCOIN',targetAmount:36000}, (err,data) => {
+			if (err) {
+				console.error(`Error during convert money for ${Ivan.username}`);
+				return;
+			};
+			console.log(`Money has been converted for ${Ivan.username}`);
+			IvanTransferMoney ();
+		});
+	}
+
+	function IvanTransferMoney (){
+		Ivan.transferMoney({to: Petya.username,amount:36000},(err,data) => {
+			if (err) {
+				console.error(`Error during transfer money to ${Petya.username}`);
+			} else {
+				console.log(`User ${Petya.username} transfered money`);
+			};
+		});
+	}
+
+
+	function IvanAddMoney () {
+    	Ivan.addMoney({ currency:'EUR', amount: 500000 }, (err, data) => {
+		    if (err) {
+		    	console.error(`Error during adding money to ${Ivan.username}`);
+		    	return;
+		    };
+		    console.log(`Money has been added to ${Ivan.username}`);
+			IvanConvertMoney ();
+		});
+    }
+
+    function IvanPerformLogin () {
+		Ivan.performLogin((err,data)=> {
+		    if (err) {
+		    	console.error('Error during login user Ivan');
+		    	return;
+		    };
+	    	console.log(`User Ivan has been logined`);
+	    	IvanAddMoney ();
+		});
+	}
+
     Ivan.createUser((err,data) =>{
 	    if (err) {
-	    	console.error('Error during creating user Ivan')
-	    }else{
+	    	console.error('Error during creating user Ivan');
+	    	return;
+	    };
 		    console.log(`User Ivan has been created`);
-		    Ivan.performLogin((err,data)=> {
-			    if (err) {
-			    	console.error('Error during login user Ivan');
-			    } else {
-			    	console.log(`User Ivan has been logined`);
-			    	Ivan.addMoney({ currency:'EUR', amount: 500000 }, (err, data) => {
-					    if (err) {
-					    	console.error(`Error during adding money to ${Ivan.username}`);
-					    }else{
-						    console.log(`Money has been added to ${Ivan.username}`);
-				    		Ivan.convertMoney({fromCurrency:'EUR',targetCurrency:'NETCOIN',targetAmount:36000}, (err,data) => {
-								if (err) {
-									console.error(`Error during convert money for ${Ivan.username}`)
-								}else{
-									console.log(`Money has been converted for ${Ivan.username}`);
-									Ivan.transferMoney({to: Petya.username,amount:36000},(err,data) => {
-										(err) ? console.error(`Error during transfer money to ${Petya.username}`) : console.log(`User ${Petya.username} transfered money`);
-									});
-								}
-							});
-						}
-					});
-			    }
-			});
-		}
+		    IvanPerformLogin ();
 	});
 
 }
